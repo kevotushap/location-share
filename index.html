@@ -9,12 +9,11 @@
   <p id="status">Requesting location...</p>
   <script>
     function sendLocation(lat, lon) {
-      // Example: send to your server endpoint (replace with your actual URL)
-      fetch('https://your-server.com/receive_location', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latitude: lat, longitude: lon, timestamp: Date.now() })
-      })
+      fetch('https://location-share-backend-zvu3.onrender.com/receive_location', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ latitude: lat, longitude: lon, timestamp: Date.now() })
+})
       .then(res => document.getElementById('status').textContent = "Location sent!")
       .catch(err => document.getElementById('status').textContent = "Failed to send location.");
     }

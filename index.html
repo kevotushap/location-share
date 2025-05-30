@@ -1,36 +1,69 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Share My Location</title>
+  <title>Latest Shared Location</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 70vh; width: 100%; margin-top: 1em; }
+    body { font-family: sans-serif; max-width: 600px; margin: auto; }
+    #info { margin-top: 1em; }
+  </style>
 </head>
 <body>
-  <h2>Share My Location</h2>
-  <p id="status">Requesting location...</p>
+  <h2>Latest Shared Location</h2>
+  <div id="map"></div>
+  <div id="info">Loading latest location...</div>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    function sendLocation(lat, lon) {
-      fetch('https://location-share-backend-zvu3.onrender.com/receive_location', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ latitude: lat, longitude: lon, timestamp: Date.now() })
-})
-      .then(res => document.getElementById('status').textContent = "Location sent!")
-      .catch(err => document.getElementById('status').textContent = "Failed to send location.");
+    // Your backend endpoint
+    const BACKEND_URL = 'https://location-share-backend-zvu3.onrender.com/latest_location';
+
+    let map = L.map('map').setView([0, 0], 2);
+    let marker = null;
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    function fetchLocationAndUpdateMap() {
+      fetch(BACKEND_URL)
+        .then(response => {
+          if (!response.ok) throw new Error("No location data");
+          return response.json();
+        })
+        .then(data => {
+          const { latitude, longitude, timestamp } = data;
+          if (!latitude || !longitude) throw new Error("Invalid location data");
+
+          // Update or place marker
+          if (marker) {
+            marker.setLatLng([latitude, longitude]);
+          } else {
+            marker = L.marker([latitude, longitude]).addTo(map);
+          }
+          map.setView([latitude, longitude], 16);
+
+          // Show info
+          let timeStr = new Date(timestamp).toLocaleString();
+          document.getElementById('info').textContent =
+            `Lat: ${latitude}, Lon: ${longitude} (as of ${timeStr})`;
+        })
+        .catch(err => {
+          document.getElementById('info').textContent =
+            'Could not load location: ' + err.message;
+        });
     }
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          document.getElementById('status').textContent = "Got location, sending...";
-          sendLocation(pos.coords.latitude, pos.coords.longitude);
-        },
-        err => {
-          document.getElementById('status').textContent = "Location error: " + err.message;
-        }
-      );
-    } else {
-      document.getElementById('status').textContent = "Geolocation not supported.";
-    }
+    // Initial load
+    fetchLocationAndUpdateMap();
+
+    // Refresh every 20 seconds for "real-time" effect
+    setInterval(fetchLocationAndUpdateMap, 20000);
   </script>
 </body>
 </html>

@@ -1,1 +1,37 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Share My Location</title>
+</head>
+<body>
+  <h2>Share My Location</h2>
+  <p id="status">Requesting location...</p>
+  <script>
+    function sendLocation(lat, lon) {
+      // Example: send to your server endpoint (replace with your actual URL)
+      fetch('https://your-server.com/receive_location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude: lat, longitude: lon, timestamp: Date.now() })
+      })
+      .then(res => document.getElementById('status').textContent = "Location sent!")
+      .catch(err => document.getElementById('status').textContent = "Failed to send location.");
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          document.getElementById('status').textContent = "Got location, sending...";
+          sendLocation(pos.coords.latitude, pos.coords.longitude);
+        },
+        err => {
+          document.getElementById('status').textContent = "Location error: " + err.message;
+        }
+      );
+    } else {
+      document.getElementById('status').textContent = "Geolocation not supported.";
+    }
+  </script>
+</body>
+</html>
